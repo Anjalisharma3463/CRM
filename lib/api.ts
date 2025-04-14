@@ -1,6 +1,7 @@
 
 // Mock data and API functions
 // In a real app, these would make actual API calls to DigitalOcean
+  
  
 const apiurl = process.env.NEXT_PUBLIC_API_URL;
 // Mock overview data
@@ -121,10 +122,7 @@ export async function fetchResources(type: "droplets" | "databases" | "domains")
         },
       });
       
- 
-      console.log("apikey",apiKey);
-      console.log("apiurl",apiurl);
-       
+  
 
       if (!res.ok) throw new Error(`Failed to fetch ${endpoint}`)
 
@@ -141,7 +139,7 @@ export async function fetchResources(type: "droplets" | "databases" | "domains")
 
   if (type === "droplets") {
     const dropletsRes = await fetchFromDO("droplets")
-
+    console.log("Fetched droplets:", dropletsRes)
     const droplets = dropletsRes.map((d: any) => ({
       id: d.id.toString(),
       name: d.name,
@@ -165,8 +163,12 @@ export async function fetchResources(type: "droplets" | "databases" | "domains")
 
   if (type === "databases") {
     const dbRes = await fetchFromDO("databases")
-
-    const databases = dbRes.map((db: any) => ({
+    console.log("Fetched databases:", dbRes)
+    
+    const databases = dbRes.map((db: any) => (
+      
+      { 
+      
       id: db.id || "db-" + Math.random(),
       name: db.name,
       type: "database",
@@ -189,7 +191,7 @@ export async function fetchResources(type: "droplets" | "databases" | "domains")
 
   if (type === "domains") {
     const domainsRes = await fetchFromDO("domains")
-
+    console.log("Fetched domains:", domainsRes)
     const domains = domainsRes.map((domain: any, i: number) => ({
       id: "domain-" + (i + 100),
       name: domain.name,
