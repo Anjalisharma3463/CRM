@@ -1,6 +1,8 @@
+
 // Mock data and API functions
 // In a real app, these would make actual API calls to DigitalOcean
-
+ 
+const apiurl = process.env.NEXT_PUBLIC_API_URL;
 // Mock overview data
 export async function fetchOverviewData() {
   // Simulate API call
@@ -13,12 +15,11 @@ export async function fetchOverviewData() {
     totalUptime: "14d 7h 32m",
   }
 }
- 
-export async function fetchResources(type = "all") {
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 800))
 
-  const droplets = [
+ 
+ 
+export async function fetchResources(type: "droplets" | "databases" | "domains") {
+  const dropletsMock = [
     {
       id: "droplet-1",
       name: "web-server-prod-01",
@@ -28,10 +29,7 @@ export async function fetchResources(type = "all") {
       cpuUsage: 42,
       memoryUsage: 58,
       createdAt: "2023-01-15T10:00:00Z",
-      cost: {
-        hourly: 0.0119,
-        monthly: 10,
-      },
+      cost: { hourly: 0.0119, monthly: 10 },
     },
     {
       id: "droplet-2",
@@ -42,10 +40,7 @@ export async function fetchResources(type = "all") {
       cpuUsage: 78,
       memoryUsage: 82,
       createdAt: "2023-02-20T14:30:00Z",
-      cost: {
-        hourly: 0.0238,
-        monthly: 20,
-      },
+      cost: { hourly: 0.0238, monthly: 20 },
     },
     {
       id: "droplet-3",
@@ -56,14 +51,25 @@ export async function fetchResources(type = "all") {
       cpuUsage: 0,
       memoryUsage: 0,
       createdAt: "2023-03-10T09:15:00Z",
-      cost: {
-        hourly: 0.0119,
-        monthly: 10,
-      },
+      cost: { hourly: 0.0119, monthly: 10 },
     },
   ]
 
-  const domains = [
+  const databasesMock = [
+    {
+      id: "db-1",
+      name: "postgres-prod-01",
+      type: "database",
+      region: "nyc1",
+      status: "active",
+      cpuUsage: 35,
+      memoryUsage: 42,
+      createdAt: "2023-01-25T13:10:00Z",
+      cost: { hourly: 0.0595, monthly: 50 },
+    },
+  ]
+
+  const domainsMock = [
     {
       id: "domain-1",
       name: "example.com",
@@ -73,10 +79,7 @@ export async function fetchResources(type = "all") {
       cpuUsage: 0,
       memoryUsage: 0,
       createdAt: "2023-01-05T11:20:00Z",
-      cost: {
-        hourly: 0,
-        monthly: 0,
-      },
+      cost: { hourly: 0, monthly: 0 },
     },
     {
       id: "domain-2",
@@ -87,43 +90,130 @@ export async function fetchResources(type = "all") {
       cpuUsage: 0,
       memoryUsage: 0,
       createdAt: "2023-02-15T16:45:00Z",
-      cost: {
-        hourly: 0,
-        monthly: 0,
-      },
+      cost: { hourly: 0, monthly: 0 },
+    },
+    {
+      id: "domain-3",
+      name: "anjali.com",
+      type: "domain",
+      region: "Global",
+      status: "active",
+      cpuUsage: 0,
+      memoryUsage: 0,
+      createdAt: "2023-02-20T12:00:00Z",
+      cost: { hourly: 0, monthly: 0 },
     },
   ]
 
-  const databases = [
-    {
-      id: "db-1",
-      name: "postgres-prod-01",
+  const fetchFromDO = async (endpoint: string): Promise<any[]> => {
+    try {
+ 
+      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+
+      if (!apiKey) {
+        throw new Error('API key is not defined');
+      }
+      
+      const res = await fetch(`${apiurl}/${endpoint}`, {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+ 
+      console.log("apikey",apiKey);
+      console.log("apiurl",apiurl);
+       
+
+      if (!res.ok) throw new Error(`Failed to fetch ${endpoint}`)
+
+      const data = await res.json()
+      console.log(`Fetched ${endpoint}:`, data);
+      console.log(`Fetched data of this ${endpoint}:`, data[endpoint]);
+      
+      return data[endpoint] || []
+    } catch (error) {
+      console.warn(`Error fetching ${endpoint}:`, error)
+      return []
+    }
+  }
+
+  if (type === "droplets") {
+    const dropletsRes = await fetchFromDO("droplets")
+
+    const droplets = dropletsRes.map((d: any) => ({
+      id: d.id.toString(),
+      name: d.name,
+      type: "droplet",
+      region: d.region?.slug || "unknown",
+      status: d.status || "unknown",
+      cpuUsage: Math.floor(Math.random() * 100),
+      memoryUsage: Math.floor(Math.random() * 100),
+      createdAt: d.created_at || new Date().toISOString(),
+      cost: {
+        hourly: 0.0119,
+        monthly: 10,
+      },
+    }))
+
+    return {
+      fetched: droplets,
+      defaults: dropletsMock,
+    }
+  }
+
+  if (type === "databases") {
+    const dbRes = await fetchFromDO("databases")
+
+    const databases = dbRes.map((db: any) => ({
+      id: db.id || "db-" + Math.random(),
+      name: db.name,
       type: "database",
-      region: "nyc1",
-      status: "active",
-      cpuUsage: 35,
-      memoryUsage: 42,
-      createdAt: "2023-01-25T13:10:00Z",
+      region: db.region || "unknown",
+      status: db.status || "active",
+      cpuUsage: Math.floor(Math.random() * 100),
+      memoryUsage: Math.floor(Math.random() * 100),
+      createdAt: db.created_at || new Date().toISOString(),
       cost: {
         hourly: 0.0595,
         monthly: 50,
       },
-    },
-  ]
+    }))
 
-  // Filter resources based on type
-  if (type === "all") {
-    return [...droplets, ...domains, ...databases]
-  } else if (type === "droplets") {
-    return droplets
-  } else if (type === "domains") {
-    return domains
-  } else if (type === "databases") {
-    return databases
+    return {
+      fetched: databases,
+      defaults: databasesMock,
+    }
   }
 
-  return []
+  if (type === "domains") {
+    const domainsRes = await fetchFromDO("domains")
+
+    const domains = domainsRes.map((domain: any, i: number) => ({
+      id: "domain-" + (i + 100),
+      name: domain.name,
+      type: "domain",
+      region: "Global",
+      status: "active",
+      cpuUsage: 0,
+      memoryUsage: 0,
+      createdAt: new Date().toISOString(),
+      cost: {
+        hourly: 0,
+        monthly: 0,
+      },
+    }))
+
+    return {
+      fetched: domains,
+      defaults: domainsMock,
+    }
+  }
+
+  return { fetched: [], defaults: [] }
 }
+
 
 // Mock resource details
 export async function fetchResourceDetails(id: string) {

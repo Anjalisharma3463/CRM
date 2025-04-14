@@ -5,7 +5,12 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +22,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Server, Globe, Database, MoreVertical, Trash2, ExternalLink, Power, PowerOff } from "lucide-react"
+import {
+  Server,
+  Globe,
+  Database,
+  MoreVertical,
+  Trash2,
+  ExternalLink,
+  Power,
+  PowerOff,
+} from "lucide-react"
 import { fetchResources, deleteResource } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
@@ -38,7 +52,10 @@ type Resource = {
 }
 
 export function ResourceList({ type = "all" }: { type?: string }) {
-  const [resources, setResources] = useState<Resource[]>([])
+  const [resources, setResources] = useState<{ fetched: Resource[]; defaults: Resource[] }>({
+    fetched: [],
+    defaults: [],
+  })
   const [loading, setLoading] = useState(true)
   const [resourceToDelete, setResourceToDelete] = useState<Resource | null>(null)
   const { toast } = useToast()
@@ -47,8 +64,22 @@ export function ResourceList({ type = "all" }: { type?: string }) {
     const fetchData = async () => {
       try {
         setLoading(true)
-        // In a real app, this would call the actual API
-        const data = await fetchResources(type)
+        let data
+  
+        if (type === "all") {
+          const [droplets, domains, databases] = await Promise.all([
+            fetchResources("droplets"),
+            fetchResources("domains"),
+            fetchResources("databases"),
+          ])
+          data = {
+            fetched: [...droplets.fetched, ...domains.fetched, ...databases.fetched],
+            defaults: [...droplets.defaults, ...domains.defaults, ...databases.defaults],
+          }
+        } else {
+          data = await fetchResources(type)
+        }
+  
         setResources(data)
       } catch (error) {
         console.error("Failed to fetch resources:", error)
@@ -61,19 +92,21 @@ export function ResourceList({ type = "all" }: { type?: string }) {
         setLoading(false)
       }
     }
-
+  
     fetchData()
-    // Poll every 30 seconds
     const interval = setInterval(fetchData, 30000)
     return () => clearInterval(interval)
   }, [type, toast])
+  
 
   const handleDelete = async () => {
     if (!resourceToDelete) return
-
     try {
       await deleteResource(resourceToDelete.id, resourceToDelete.type)
-      setResources(resources.filter((r) => r.id !== resourceToDelete.id))
+      setResources((prev) => ({
+        fetched: prev.fetched.filter((r) => r.id !== resourceToDelete.id),
+        defaults: prev.defaults.filter((r) => r.id !== resourceToDelete.id),
+      }))
       toast({
         title: "Resource deleted",
         description: `${resourceToDelete.name} has been deleted successfully.`,
@@ -116,6 +149,8 @@ export function ResourceList({ type = "all" }: { type?: string }) {
     }
   }
 
+  const allResources = [...resources.defaults, ...resources.fetched]
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -130,7 +165,7 @@ export function ResourceList({ type = "all" }: { type?: string }) {
     )
   }
 
-  if (resources.length === 0) {
+  if (allResources.length === 0) {
     return (
       <Card className="bg-background/60 backdrop-blur-sm">
         <CardContent className="flex flex-col items-center justify-center p-6">
@@ -145,7 +180,7 @@ export function ResourceList({ type = "all" }: { type?: string }) {
 
   return (
     <div className="space-y-4">
-      {resources.map((resource) => (
+      {allResources.map((resource) => (
         <Card key={resource.id} className="bg-background/60 backdrop-blur-sm overflow-hidden">
           <CardContent className="p-0">
             <div className="flex flex-col md:flex-row">
@@ -187,21 +222,19 @@ export function ResourceList({ type = "all" }: { type?: string }) {
                           </Link>
                         </DropdownMenuItem>
                         {resource.type === "droplet" && (
-                          <>
-                            <DropdownMenuItem>
-                              {resource.status === "active" ? (
-                                <>
-                                  <PowerOff className="mr-2 h-4 w-4" />
-                                  Power Off
-                                </>
-                              ) : (
-                                <>
-                                  <Power className="mr-2 h-4 w-4" />
-                                  Power On
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                          </>
+                          <DropdownMenuItem>
+                            {resource.status === "active" ? (
+                              <>
+                                <PowerOff className="mr-2 h-4 w-4" />
+                                Power Off
+                              </>
+                            ) : (
+                              <>
+                                <Power className="mr-2 h-4 w-4" />
+                                Power On
+                              </>
+                            )}
+                          </DropdownMenuItem>
                         )}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
