@@ -94,9 +94,8 @@ export function ResourceList({ type = "all" }: { type?: string }) {
     }
   
     fetchData()
-    const interval = setInterval(fetchData, 30000)
-    return () => clearInterval(interval)
-  }, [type, toast])
+    
+   }, [ ])
   
 
   const handleDelete = async () => {
