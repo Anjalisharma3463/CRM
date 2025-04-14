@@ -2,8 +2,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CreateDropletForm } from "@/components/create-droplet-form"
-import { CreateDomainForm } from "@/components/create-domain-form"
+import { CreateDropletForm } from "@/components/create-droplet-form" 
 import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -21,22 +20,11 @@ export default function CreatePage() {
 
       <Card className="bg-background/60 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Create a New Resource</CardTitle>
-          <CardDescription>Select the type of resource you want to create</CardDescription>
-        </CardHeader>
+          <CardTitle>Create a New DropLet</CardTitle>
+         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="droplet">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="droplet">Droplet (VM)</TabsTrigger>
-              <TabsTrigger value="domain">Domain</TabsTrigger>
-            </TabsList>
-            <TabsContent value="droplet">
-              <CreateDropletForm />
-            </TabsContent>
-            <TabsContent value="domain">
-              <CreateDomainForm />
-            </TabsContent>
-          </Tabs>
+               <CreateDropletForm />
+                    
         </CardContent>
       </Card>
     </div>

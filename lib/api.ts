@@ -13,8 +13,7 @@ export async function fetchOverviewData() {
     totalUptime: "14d 7h 32m",
   }
 }
-
-// Mock resources data
+ 
 export async function fetchResources(type = "all") {
   // Simulate API call
   await new Promise((resolve) => setTimeout(resolve, 800))
@@ -324,14 +323,7 @@ export async function createDroplet(data: any) {
   return { success: true, id: "new-droplet-id" }
 }
 
-// Mock create domain
-export async function createDomain(data: any) {
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  console.log("Creating domain:", data)
-  return { success: true, id: "new-domain-id" }
-}
+ 
 
 // Mock delete resource
 export async function deleteResource(id: string, type: string) {
