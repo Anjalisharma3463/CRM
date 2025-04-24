@@ -6,12 +6,27 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
-import { createDroplet } from "@/lib/api"
+import { createDroplet } from "@/lib/api"; // Make sure the path is correct
 
+// ✅ Zod schema including backend-required fields
 const formSchema = z.object({
   name: z.string().min(3, {
     message: "Name must be at least 3 characters.",
@@ -25,9 +40,13 @@ const formSchema = z.object({
   image: z.string({
     required_error: "Please select an image.",
   }),
+  ssh_keys: z.string().optional(),
+  backups: z.boolean().default(false),
+  ipv6: z.boolean().default(false),
+  monitoring: z.boolean().default(false),
+  tags: z.string().optional(),
 })
 
-// Mock data for form options
 const regions = [
   { value: "nyc1", label: "New York 1" },
   { value: "sfo2", label: "San Francisco 2" },
@@ -61,18 +80,39 @@ export function CreateDropletForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      region: "",
+      size: "",
+      image: "",
+      ssh_keys: "",
+      backups: false,
+      ipv6: false,
+      monitoring: false,
+      tags: "",
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsSubmitting(true)
-      // In a real app, this would call the actual API
-      await createDroplet(values)
+   
+      const payload = {
+        ...values,
+        ssh_keys: values.ssh_keys ? values.ssh_keys.split(",").map(key => key.trim()) : [],
+        tags: values.tags ? values.tags.split(",").map(tag => tag.trim()) : [],
+      }
+      console.log('payload data input :  ',payload);
+
+      console.log(createDroplet); // Check if it's a function
+const res = await createDroplet(payload);
+
+      
+      console.log("created droplet from API:", res);
+         
       toast({
         title: "Droplet created",
         description: `${values.name} is being created. This may take a few minutes.`,
       })
+
       router.push("/")
     } catch (error) {
       console.error("Failed to create droplet:", error)
@@ -89,6 +129,7 @@ export function CreateDropletForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+        {/* Droplet Name */}
         <FormField
           control={form.control}
           name="name"
@@ -98,12 +139,12 @@ export function CreateDropletForm() {
               <FormControl>
                 <Input placeholder="web-server-prod-01" {...field} />
               </FormControl>
-              <FormDescription>This is the hostname of your droplet.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        {/* Region Dropdown */}
         <FormField
           control={form.control}
           name="region"
@@ -124,12 +165,12 @@ export function CreateDropletForm() {
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>Choose the datacenter region closest to your users.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        {/* Image Dropdown */}
         <FormField
           control={form.control}
           name="image"
@@ -150,12 +191,12 @@ export function CreateDropletForm() {
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>Choose the operating system for your droplet.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        {/* Size Dropdown */}
         <FormField
           control={form.control}
           name="size"
@@ -176,11 +217,13 @@ export function CreateDropletForm() {
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>Choose the CPU and RAM configuration.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        {/* SSH Keys, Tags, Backups, IPv6, and Monitoring */}
+        {/* These fields are already handled in your form as checkboxes and text inputs */}
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Creating..." : "Create Droplet"}

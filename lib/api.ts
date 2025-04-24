@@ -17,6 +17,53 @@ export async function fetchOverviewData() {
   }
 }
 
+
+export async function createdroplet(dropletData:any) {
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+  const apiurl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!apiKey || !apiurl) {
+    throw new Error("API key or URL is not defined");
+  }
+
+  // Default droplet parameters if not provided
+  const payload = {
+    name: dropletData?.name || "my-droplet",
+    region: dropletData?.region || "nyc3", // example region
+    size: dropletData?.size || "s-1vcpu-1gb", // example size
+    image: dropletData?.image || "ubuntu-20-04-x64", // image slug
+    backups: false,
+    ipv6: true,
+    user_data: null,
+    monitoring: true,
+    tags: ["frontend-droplet"],
+  };
+
+  try {
+    const response = await fetch(`${apiurl}/droplets`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Failed to create droplet:", errorData);
+      throw new Error(`Droplet creation failed: ${errorData.message}`);
+    }
+
+    const responseData = await response.json();
+    console.log("Droplet created successfully:", responseData);
+    return responseData;
+  } catch (error) {
+    console.error("Error in createDroplet:", error);
+    return { error: true, message: (error as Error).message };
+  }
+}
+
  
  
 export async function fetchResources(type: "droplets" | "databases" | "domains") {
@@ -405,16 +452,24 @@ export async function fetchResourceDetails(id: string) {
     },
   }
 }
-
-// Mock create droplet
-export async function createDroplet(data: any) {
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-
-  console.log("Creating droplet:", data)
-  return { success: true, id: "new-droplet-id" }
-}
-
+export const createDroplet  = async (dropletData) => {
+  console.log("Creating droplet with data:", dropletData);
+  
+  if(!dropletData) {
+   dropletData = {
+    name: "new-droplet",
+    region: "nyc3",
+    size: "s-1vcpu-1gb",
+    image: "ubuntu-20-04-x64",
+  };
+  }
+  const response = await createdroplet(dropletData);
+  if (response.error) {
+    alert(`Error: ${response.message}`);
+  } else {
+    alert("Droplet created successfully!");
+  }
+};
  
 
 // Mock delete resource
